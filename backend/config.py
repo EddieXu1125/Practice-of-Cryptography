@@ -1,10 +1,13 @@
-DEBUG = True
-SQLALCHEMY_ECHO = False
-SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:root@localhost/flask_test'
-SECRET_KEY = '*\xff\x93\xc8w\x13\x0e@3\xd6\x82\x0f\x84\x18\xe7\xd9\\|\x04e\xb9(\xfd\xc3'
-common/_init_.py
-# config=utf-8 
-from flask_sqlalchemy import SQLAlchemy 
+import os
+import sys
 
-__all__ = ['db'] 
-db = SQLAlchemy()
+class BaseConfig:
+    ADMIN_EMAIL = os.getenv('Luminous','admin@helloflask.com')
+    PHOTO_PER_PAGE = 12
+    COMMENT_PER_PAGE = 15
+    NOTIFICATION_PER_PAGE = 20
+    USER_PER_PAGE = 20
+    SEARCH_RESULT_PER_PAGE = 20
+    PHOTO_SIZE =  500
+    SECRET_KEY = os.getenv('SECRET_KEY', 'secret string')
+    MAX_CONTENT_LENGTH = 3 * 1024 * 1024 

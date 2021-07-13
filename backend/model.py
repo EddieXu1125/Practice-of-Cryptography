@@ -1,122 +1,105 @@
 from flask import Flask
+from flask.globals import current_app
+from flask_login.mixins import AnonymousUserMixin
 from flask_sqlalchemy import SQLAlchemy
 from passlib.apps import custom_app_context
 from ext import db
-from private_config import Config
+from config import BaseConfig
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, SignatureExpired, BadSignature
+from flask_login import UserMixin, login_manager
+from datetime import datetime
 
-class Role(db.Model):
-    # 定义表名
-    __tablename__ = 'roles'
-    # 定义列对象
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True)
-    us = db.relationship('User', backref='role')
- 
- 
-class Users(db.Model):
+class Users(db.Model,UserMixin):
     __tablename__ = 'users'
-    uid = db.Column(db.Integer, primary_key=True,autoincrement=True)
-    name = db.Column(db.String(64), unique=True, index=True)
-    password = db.Column(db.String(64))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(64), unique=True, index=True)
+    password = db.Column(db.String(150))
     email = db.Column(db.String(100))
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    admire = db.Column(db.String(4096), default=None)
     brief = db.Column(db.String(200))
-    relation = db.relationship('Relation', order_by='Relation.id', backref='user')
 
-    def __init__(self, username, password,email):
-        self.name = username
+    photos = db.relationship('Photo', back_populates='author', cascade='all')
+   
+    def __init__(self, username, password, email):
+        self.username = username
         self.password = password
         self.email = email
 
     def hash_password(self, password):
         self.password = custom_app_context.encrypt(password)
-
+    
     def verify_password(self, password):
         return custom_app_context.verify(password, self.password)
  
     def generate_auth_token(self, expiration = 600):
-        s = Serializer(Config.SECRET_KEY, expires_in = expiration)
+        s = Serializer(BaseConfig.SECRET_KEY, expires_in = expiration)
         return s.dumps({ 'id': self.id })
 
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(Config.SECRET_KEY)
+    def verify_token(token):
+        s = Serializer(BaseConfig.SECRET_KEY)
         try:
             data = s.loads(token)
         except SignatureExpired:
-            return None # valid token, but expired
+            return None
         except BadSignature:
-            return None # invalid token
-        user = Users.query.get(data['uid'])
+            return None
+        user = Users.query.get(data['id'])
         return user
 
+    def is_authenticated(self):
+        return True
+ 
+    def is_active(self):
+        return True
+ 
+    def is_anonymous(self):
+        return False
 
+    def to_json(self):
+        dict = self.__dict__
+        print(type(dict))
+        if "_sa_instance_state" in dict.keys():
+            dict.pop('_sa_instance_state')
+        return dict
 
-class Resource(db.Model):
-    __tablename__ = 'timeline'
-    pid = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    uid = db.Column(db.Integer)
-    img = db.Column(db.String(200))
-    desc = db.Column(db.String(100))
-    author = db.Column(db.String(30))
-    date = db.Column(db.DateTime)
+class Photo(db.Model):
+    __tablename__ = 'photo'
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(500))
+    filename = db.Column(db.String(500))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    def __init__(self, uid, img, desc, author, date):
-        self.uid = uid
-        self.img = img
-        self.desc = desc
+    author = db.relationship('Users', back_populates='photos')
+    # comments = db.relationship('Comment', back_populates='photo', cascade='all')
+    # collectors = db.relationship('Collect', back_populates='collected', cascade='all')
+
+    def __init__(self, filename, discription, author):
+        self.filename = filename
+        self.discription = discription
         self.author = author
-        self.date = date
 
-class Comments(db.Model):
-    __tablename__ = 'comments'
-    cid = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    pid = db.Column(db.Integer, nullable=False)
-    uid = db.Column(db.Integer, nullable=False)
-    comments = db.Column(db.String(1024))
-    username = db.Column(db.String(80))
-    datetime = db.Column(db.DateTime)
+# class Collect(db.Model):
+#     __tablename__ = 'collect'
+#     collector_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+#                              primary_key=True)
+#     collected_id = db.Column(db.Integer, db.ForeignKey('photo.id'),
+#                              primary_key=True)
+#     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __init__(self, pid, uid, comments, username, datetime):
-        self.pid = pid
-        self.uid = uid
-        self.comments = comments
-        self.username = username
-        self.datetime = datetime
+#     collector = db.relationship('Users', back_populates='collections', lazy='joined')
+#     collected = db.relationship('Photo', back_populates='collectors', lazy='joined')
 
-class Relation(db.Model):
-    __tablename__ = 'relation'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    uid = db.Column(db.Integer, ForeignKey('users.uid'))
-    vid = db.Column(db.Integer)
-    status = db.Column(db.Boolean)
 
-    def __init__(self, uid, vid, status):
-        self.uid = uid
-        self.vid = vid
-        self.status = status
+# class Comment(db.Model):
+#     __tablename__ = 'comment'
+#     id = db.Column(db.Integer, primary_key=True)
+#     body = db.Column(db.Text)
+#     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+#     flag = db.Column(db.Integer, default=0)
+#     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     photo_id = db.Column(db.Integer, db.ForeignKey('photo.id'))
 
-# m_type:
-# 1 admire messages
-# 2 comment messages
-# 3 follow messages
-# 4 forward messages
-class Message(db.Model):
-    __tablename__ = 'message'
-    mid = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    uid = db.Column(db.Integer, nullable=False)
-    vid = db.Column(db.Integer, nullable=False)
-    pid = db.Column(db.Integer)
-    m_type = db.Column(db.Integer, nullable=False)
-    m_content = db.Column(db.String(100))
-    m_status = db.Column(db.Boolean, default=True)
+#     photo = db.relationship('Photo', back_populates='comments')
+#     author = db.relationship('Users', back_populates='comments')
 
-    def __init__(self, uid, vid, pid, m_type, m_content, m_status):
-        self.uid = uid
-        self.vid = vid
-        self.pid = pid
-        self.m_type = m_type
-        self.m_content = m_content
-        self.m_status = m_status
+
