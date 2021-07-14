@@ -64,7 +64,7 @@ def extract(secret_url,info_saved):
     #print(wt[i:i+15])
         content+=temp
     #print(content)
-    with open(info_saved,"w",encoding = "utf-8") as f:
+    with open(info_saved,"a",encoding = "utf-8") as f:
         f.write(content)
     f.close
 
