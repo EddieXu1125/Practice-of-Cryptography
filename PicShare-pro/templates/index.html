@@ -1,0 +1,34 @@
+
+{% extends 'base.html' %}
+{% from 'bootstrap/pagination.html' import render_pagination %}
+
+{% block title %}Home{% endblock %}
+
+
+{% block content %}
+<h1 align="center">{{ user.username }}'s notes</h1>
+<h1 align="center">记录点滴美好</h1>
+<ul class="1list-group list-group-flush" id="notes">
+    {% for note in notes %}
+    <li class="list-group-item">
+        <div>Date:{{note.timestamp}}</div>
+        <div>Liked:{{note.like}}</div>
+        <div><img  src="../upload/{{ note.filename }}" alt="User Image" >
+        <button type="button"  onclick="likeNote( {{ note.id }} )">
+            <span aria-hidden="true">+1 like</span>
+        </button>
+        </div>
+    </li>  
+    {% endfor %}
+</ul>
+
+
+{% endblock %}
+
+
+
+
+
+
+
+
