@@ -2,10 +2,9 @@ from filecmp import cmp
 #from forms.main import CommentForm, DescriptionForm
 from forms import *
 from werkzeug.wrappers import AuthorizationMixin
-from werkzeug.utils import secure_filename
+from werkzeug.utils import redirect, secure_filename
 from qcloud_cos import CosS3Client
 import pymysql
-import flask_bootstrap
 from flask_login import LoginManager, login_required, login_user, logout_user,current_user
 from flask import Flask, request, url_for,flash,jsonify, g, json, make_response, render_template,Blueprint
 from flask_cors import CORS
@@ -92,23 +91,66 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('/'))
+#允许上传的图片文件   
+ALLOWED_EXTENSIONS = {'png','bmp','tiff','jpeg','jpg'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 #图片上传
 @app.route('/upload',methods=['GET','POST'])
+@login_required
 def upload():
     db.create_all()
     if request.method == 'POST':
         f = request.files['file']
-        basepath = os.path.dirname(__file__)
-        upload_path = os.path.join(basepath,'uploads',secure_filename(f.filename))
-        f.save(upload_path)
-        filename = f.filename
-        dis = request.form['discribe']
-        photo = Photo(filename,dis,current_user._get_current_object())
-        db.session.add(photo)
-        db.session.commit()
-        return '上传成功'
+        if allowed_file(f.filename):
+            basepath = os.path.dirname(__file__)
+            upload_path = os.path.join(basepath,'static/uploads',secure_filename(f.filename))
+            f.save(upload_path)
+            filename = f.filename
+            dis = request.form['discribe']
+            photo = Photo(upload_path,dis,current_user._get_current_object())
+            db.session.add(photo)
+            db.session.commit()
+            return '上传成功'
+        flash('图片格式违法')
     return render_template('User/upload.html')
     
+#展示主页图片
+@app.route('/')
+def report_photo():
+    ROW_PER_PAGE = 5
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['PHOTO_PER_PAGE']
+    paginate=Photo.query.order_by(Photo.timestamp.desc()).paginate(page,per_page,error_out=False)
+    return render_template('index.html',paginate=paginate,notes=paginate.items)
+
+#展示具体图片
+@app.route('/photo/<int:photo_id>')
+def show_photo(photo_id):
+    photo = Photo.query.get_or_404(photo_id)
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['PHOTO_PER_PAGE']
+    pagination = Photo.query.with_parent(photo).order_by(Photo.timestamp.asc()).paginate(page, per_page)
+
+    return render_template('main/photo.html', photo=photo)
+
+
+#点赞图片
+@app.route('/photo/<int:photo_id>')
+@login_required
+def like_photo(photo_id):
+    photo = Photo.query.get_or_404(photo_id)
+    if photo:
+        photo.like += 1
+        db.session.commit()
+        flash('Like Photo','success')
+    else:
+        flash('No photo')
+    return redirect(url_for('show_photo',photo_id=photo.id))
+
+
 if __name__ == '__main__':
     app.run(debug=True)

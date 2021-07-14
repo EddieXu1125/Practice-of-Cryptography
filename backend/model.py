@@ -15,7 +15,6 @@ class Users(db.Model,UserMixin):
     username = db.Column(db.String(64), unique=True, index=True)
     password = db.Column(db.String(150))
     email = db.Column(db.String(100))
-    brief = db.Column(db.String(200))
 
     photos = db.relationship('Photo', back_populates='author', cascade='all')
    
@@ -60,34 +59,23 @@ class Users(db.Model,UserMixin):
         if "_sa_instance_state" in dict.keys():
             dict.pop('_sa_instance_state')
         return dict
-
+        
 class Photo(db.Model):
     __tablename__ = 'photo'
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(500))
-    filename = db.Column(db.String(500))
+    filename = db.Column(db.String(10000)) #存图片路径
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    like = db.Column(db.Integer)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     author = db.relationship('Users', back_populates='photos')
-    # comments = db.relationship('Comment', back_populates='photo', cascade='all')
-    # collectors = db.relationship('Collect', back_populates='collected', cascade='all')
+    #comments = db.relationship('Comment', back_populates='photo', cascade='all')
 
     def __init__(self, filename, discription, author):
         self.filename = filename
         self.discription = discription
         self.author = author
-
-# class Collect(db.Model):
-#     __tablename__ = 'collect'
-#     collector_id = db.Column(db.Integer, db.ForeignKey('users.id'),
-#                              primary_key=True)
-#     collected_id = db.Column(db.Integer, db.ForeignKey('photo.id'),
-#                              primary_key=True)
-#     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-#     collector = db.relationship('Users', back_populates='collections', lazy='joined')
-#     collected = db.relationship('Photo', back_populates='collectors', lazy='joined')
 
 
 # class Comment(db.Model):
