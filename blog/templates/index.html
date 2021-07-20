@@ -1,0 +1,55 @@
+
+{% extends 'base.html' %}
+{% from 'bootstrap/pagination.html' import render_pagination %}
+
+{% block title %} Explore {% endblock %}
+
+{% block content %}
+
+<h1 align="center">记录点滴美好</h1>
+<ul class="1list-group list-group-flush">
+    {% for photo in photos %}
+    <li class="list-group-item" id={{photo.id}}>
+        <div>Author:&nbsp; <a href="u/{{photo.author_id}}">{{photo.author.username}}</a></div>
+        <div>Date:&nbsp; {{photo.timestamp}}</div>
+        <div>Liked:&nbsp; {{photo.like}}</div>
+        <div><img src="{{url_for('static',filename='uploads/'+ photo.filename)}}" width="400" height="400" alt="User Image" id='user-pic' name="{{photo.author.username}}">
+        </div>&nbsp;&nbsp; 
+        <br>
+        {{photo.discription}}
+        <br>   
+        <div>
+            {% if user.is_authenticated %}
+            <button type="button" class="btn btn-primary" onclick="likeNote({{ photo.id }})">
+                <span aria-hidden="true">like</span>
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-primary" onclick="alert('Please Login or Register first')">
+                <span aria-hidden="true">like</span>
+            </button>
+            {% endif %}
+        </div>
+    </li>  
+    {% endfor %}
+    
+</ul>
+    {% if paginate.has_prev%}
+    <div align="left" style='display:inline;' id='pre'>
+        <a href="?page={{paginate.prev_num}}"><strong>Previous</strong></a>
+    </div>
+    {% endif %}
+    {% if paginate.has_next%}
+    <div align="right" style='display:inline;' id='nxt'>
+        <a href="?page={{paginate.next_num}}"><strong>Next</strong></a>
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+
+
+
+
+
+
+

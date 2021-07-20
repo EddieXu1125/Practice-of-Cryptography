@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Upload{% endblock %}
+
+{% block content %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul class=flashes>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    {% endwith %}
+
+<Legend>Upload file:</Legend>
+
+
+<form action="upload" enctype="multipart/form-data" id="upload" class="dropzone" method='POST'>
+    <input  type="file" name="files" id="note" class="form-control">
+    <p>Your Description<input type="text" name="data"></p>
+    <input type='submit' value='上传' >
+</form>
+{% endblock %}

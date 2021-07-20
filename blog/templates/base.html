@@ -1,0 +1,127 @@
+{% from 'bootstrap/nav.html' import render_nav_item %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {% block head %}
+        <title>{% block title %}{% endblock %} - Chinagram</title>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='picshare.ico') }}">
+        {% block styles %}
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='open-iconic/font/css/open-iconic-bootstrap.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/lib/dropzone.min.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+            
+        {% endblock styles %}
+    {% endblock head %}
+    <style>
+        img{
+          width: 50%;
+          height: 50%;
+        }
+    </style>
+</head>
+
+
+<body>
+    <script
+    type="text/javascript"
+    src="{{ url_for('static', filename='js/index.js') }}"
+    ></script>
+    {% block navbar %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='picshare.ico') }}" alt="Albumy">
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01"
+                    aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor01">
+                <div class="navbar-nav mr-auto">
+                    {% if current_user.is_authenticated %}
+                        {{ render_nav_item('home', 'My Photos') }}
+                    {% else %}
+                        {{ render_nav_item('login', 'My Photos') }}
+                    {% endif %}  
+                    {{ render_nav_item('index', 'Explore') }}
+                    {{ render_nav_item('upload', 'Upload') }}
+                    <form class="form-inline my-2 my-lg-0" action="{{ url_for('index') }}">
+                        <input type="text" name="q" class="form-control mr-sm-1" placeholder="Photo, tag or user"
+                               required>
+                        <button class="btn btn-light my-2 my-sm-0" type="submit">
+                            <span class="oi oi-magnifying-glass"></span>
+                        </button>
+                    </form>
+                </div>
+                <div class="navbar-nav ml-auto">
+                {% if current_user.is_authenticated %}
+                    <a class="nav-item nav-link" href="/home"><strong>{{  current_user.username }}</strong> </a>
+                    <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
+                {% else %}
+                    <a class="btn btn-outline-primary" href="{{ url_for('login') }}">Login</a>&nbsp;&nbsp;
+                    <a class="btn btn-primary" href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+    
+
+<main>
+    {% with messages = get_flashed_messages(with_categories=true) %} 
+        {% if messages %} 
+        {% for category, message in messages %} 
+        {% if category == 'error' %}
+        <div class="alert alert-danger alter-dismissable fade show" role="alert">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        {% else %}
+        <div class="alert alert-success alter-dismissable fade show" role="alert">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        {% endif %} {% endfor %} {% endif %} {% endwith %}
+
+    	    
+        <div class="container">              
+            {% block content %}{% endblock %}           
+        </div>
+
+        {# 脚注#}
+        {% block footer %}
+            <footer>
+                <p class="blog-footer-bottom column small" style="text-align:center" style="margin-top:-180px;" height = "180px" position="relative" clear="both">
+                    <small>
+                    <select aria-label="切换显示语言" class="hztqj">
+                        <option value="zh-cn">中文(简体)</option>
+                        <option value="zh-tw">中文(台灣)</option>
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                    </select>
+                    &copy; 2021Chinagram | CUCer 旗下产品
+                    </small>
+                </p>
+                <p style="text-align:center">
+                    <small >捕捉每一秒的精彩</small>
+                </p>
+            </footer>
+        {% endblock %}
+</main>
+<div id="toast"></div>
+<script src="/static/js/lib/bootstrap.min.js"></script>
+<script src="/static/js/lib/dropzone.min.js"></script>
+<script src="/static/js/common.js"></script>
+</body>
+</html>

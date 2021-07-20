@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %} My Photos {% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}  
+    <h1 align="center">{{ user.username }}的精彩瞬间</h1>
+{% endif %}
+
+
+<ul class="1list-group list-group-flush" id="notes">
+    {% for photo in user.photos %}
+    <li class="list-group-item">
+        <div>{{photo.timestamp}}</div>
+        <div>liked:{{photo.like}}</div>
+        <img src="{{url_for('static',filename='uploads/'+photo.filename)}}" width="400" height="400" alt="User Image" id="user-pic">
+        <div>{{photo.discription}}</div>
+        <div>
+            <button aria-hidden="true" type="button" class="close" onclick="deleteNote({{ photo.id }})">
+                <span >Delete note</span>
+            </button>
+        </div>
+    </li>  
+    {% endfor %}
+</ul>
+    {% if paginate.has_prev%}
+    <div align="left">
+        <a href="?page={{paginate.prev_num}}"><strong>Previous</strong></a>
+    </div>
+    {% endif %}
+    {% if paginate.has_next%}
+    <div align="right">
+        <a href="?page={{paginate.next_num}}"><strong>Next</strong></a>
+    </div>
+    {% endif %}
+{% endblock %}

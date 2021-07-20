@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %} {{user.username}} {% endblock %}
+
+{% block content %}
+<h1 align="center">{{user.username}} Photos</h1>
+
+<ul class="1list-group list-group-flush" id="notes">
+    {% for photo in user.photos %}
+    <li class="list-group-item">
+        <div>{{photo.timestamp}}</div>
+        <div>liked:{{photo.like}}</div>
+        <img src="{{url_for('static',filename='uploads/'+photo.filename)}}" width="400" height="400" alt="User Image" id="user-pic">
+        <br>
+        <div>{{photo.discription}}</div>
+        <br>
+        <div>
+            {% if visitor.is_authenticated %}
+            <button type="button" class="btn btn-primary" onclick="likeNote({{ photo.id }})">
+                <span aria-hidden="true">like</span>
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-primary" onclick="alert('Please Login or Register first')">
+                <span aria-hidden="true">like</span>
+            </button>
+            {% endif %}
+        </div>
+    </li>  
+    {% endfor %}
+</ul>
+    {% if paginate.has_prev%}
+    <div align="left">
+        <a href="?page={{paginate.prev_num}}"><strong>Previous</strong></a>
+    </div>
+    {% endif %}
+    {% if paginate.has_next%}
+    <div align="right">
+        <a href="?page={{paginate.next_num}}"><strong>Next</strong></a>
+    </div>
+    {% endif %}
+
+{% endblock %}
